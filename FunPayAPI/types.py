@@ -303,9 +303,9 @@ class OrderShortcut:
         :rtype: :obj:`int`
         """
         res = RegularExpressions()
-        result = res.PRODUCTS_AMOUNT.findall(self.description)
-        if result:
-            return int(result[0].split(" ")[0])
+        match = res.PRODUCTS_AMOUNT.search(self.description)
+        if match:
+            return int(match.group(1).replace(' ', ''))
         return 1
 
     def __str__(self):
