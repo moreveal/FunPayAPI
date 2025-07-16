@@ -453,7 +453,7 @@ class Account:
                 image_link = image_link.get("href")
                 message_text = None
             else:
-                message_text = parser.find("div", {"class": "message-text"}).text.replace(self.__bot_character, "", 1)
+                message_text = parser.find("div", {"class": "chat-msg-text"}).text.replace(self.__bot_character, "", 1)
         except Exception as e:
             logger.debug("SEND_MESSAGE RESPONSE")
             logger.debug(response.content.decode())
@@ -1382,9 +1382,11 @@ class Account:
             else:
                 image_link = None
                 if author_id == 0:
-                    message_text = parser.find("div", {"class": "alert alert-with-icon alert-info"}).text.strip()
+                    alert_div = parser.find("div", {"class": "alert alert-with-icon alert-info"})
+                    message_text = alert_div.text.strip() if alert_div else ""
                 else:
-                    message_text = parser.find("div", {"class": "message-text"}).text
+                    text_div = parser.find("div", {"class": "chat-msg-text"})
+                    message_text = text_div.text.strip() if text_div else ""
 
             by_bot = False
             if not image_link and message_text.startswith(self.__bot_character):
