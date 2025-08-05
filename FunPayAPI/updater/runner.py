@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 
 import json
 import logging
+from datetime import datetime
 from bs4 import BeautifulSoup
 
 from ..common import exceptions
@@ -14,7 +15,6 @@ from .events import *
 
 
 logger = logging.getLogger("FunPayAPI.runner")
-
 
 class Runner:
     """
@@ -75,7 +75,10 @@ class Runner:
         self.account: Account = account
         """Экземпляр аккаунта, к которому привязан Runner."""
         self.account.runner = self
-
+        
+        self.last_check_messages = datetime.min
+        """Последнее время получения сообщений"""
+        
         self.__msg_time_re = re.compile(r"\d{2}:\d{2}")
 
     def get_updates(self) -> dict:
@@ -235,8 +238,8 @@ class Runner:
                 break
             except exceptions.RequestFailedError as e:
                 logger.error(e)
-            except:
-                logger.error(f"Не удалось получить истории чатов {list(chats_data.keys())}.")
+            except Exception as e:
+                logger.error(f"Не удалось получить истории чатов {list(chats_data.keys())} ({e}).")
                 logger.debug("TRACEBACK", exc_info=True)
             time.sleep(1)
         else:
@@ -281,6 +284,8 @@ class Runner:
                 else:
                     messages = messages[-1:]
 
+            messages = [msg for msg in messages if msg.date and msg.date >= self.last_check_messages] # Фильтруем старые сообщения, иногда API может их прокинуть как новые
+
             self.last_messages_ids[cid] = messages[-1].id  # Перезаписываем ID последнего сообщение
             self.by_bot_ids[cid] = [i for i in self.by_bot_ids[cid] if i > self.last_messages_ids[cid]]  # чистим память
 
@@ -288,6 +293,8 @@ class Runner:
                 event = NewMessageEvent(self.__last_msg_event_tag, msg, stack)
                 stack.add_events([event])
                 result[cid].append(event)
+
+        self.last_check_messages = datetime.now()
         return result
 
     def parse_order_updates(self, obj) -> list[InitialOrderEvent | OrdersListChangedEvent | NewOrderEvent |

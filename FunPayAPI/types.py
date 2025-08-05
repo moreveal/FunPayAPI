@@ -157,13 +157,16 @@ class Message:
 
     :param image_link: ссылка на изображение из сообщения (если есть).
     :type image_link: :obj:`str` or :obj:`None`, опционально
+    
+    :param date: дата сообщения
+    :type date: :obj:`datetime.datetime` or :obj:`None`, опционально
 
     :param determine_msg_type: определять ли тип сообщения.
     :type determine_msg_type: :obj:`bool`, опционально
     """
     def __init__(self, id_: int, text: str | None, chat_id: int | str, chat_name: str | None,
                  author: str | None, author_id: int, html: str,
-                 image_link: str | None = None, determine_msg_type: bool = True, badge_text: Optional[str] = None):
+                 image_link: str | None = None, determine_msg_type: bool = True, badge_text: Optional[str] = None, date: Optional[datetime.datetime] = None):
         self.id: int = id_
         """ID сообщения."""
         self.text: str | None = text
@@ -186,6 +189,8 @@ class Message:
         """Отправлено ли сообщение с помощью :meth:`FunPayAPI.Account.send_message`?"""
         self.badge: str | None = badge_text
         """Текст бэйджика тех. поддержки."""
+        self.date: datetime.datetime | None = date
+        """Дата сообщения"""
 
     def get_message_type(self) -> MessageTypes:
         """
