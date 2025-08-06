@@ -284,15 +284,15 @@ class Runner:
                 else:
                     messages = messages[-1:]
 
-            messages = [msg for msg in messages if msg.date and msg.date >= self.last_check_messages] # Фильтруем старые сообщения, иногда API может их прокинуть как новые
+            messages = [msg for msg in messages if not msg.date or msg.date >= self.last_check_messages] # Фильтруем старые сообщения, иногда API может их прокинуть как новые
+            if messages:
+                self.last_messages_ids[cid] = messages[-1].id  # Перезаписываем ID последнего сообщение
+                self.by_bot_ids[cid] = [i for i in self.by_bot_ids[cid] if i > self.last_messages_ids[cid]]  # чистим память
 
-            self.last_messages_ids[cid] = messages[-1].id  # Перезаписываем ID последнего сообщение
-            self.by_bot_ids[cid] = [i for i in self.by_bot_ids[cid] if i > self.last_messages_ids[cid]]  # чистим память
-
-            for msg in messages:
-                event = NewMessageEvent(self.__last_msg_event_tag, msg, stack)
-                stack.add_events([event])
-                result[cid].append(event)
+                for msg in messages:
+                    event = NewMessageEvent(self.__last_msg_event_tag, msg, stack)
+                    stack.add_events([event])
+                    result[cid].append(event)
 
         self.last_check_messages = datetime.now()
         return result

@@ -1394,35 +1394,30 @@ class Account:
                 by_bot = True
                 
             date = parser.find('div', {"class": "chat-msg-date"})
-            date_text = date.get('title')
+            date_text = date.get('title') if date else None
+
             dt = None
-            if date_text:
-                date_text = date_text.strip().replace(',', '')
-
-                ru_months = {
-                    "января": "January",
-                    "февраля": "February",
-                    "марта": "March",
-                    "апреля": "April",
-                    "мая": "May",
-                    "июня": "June",
-                    "июля": "July",
-                    "августа": "August",
-                    "сентября": "September",
-                    "октября": "October",
-                    "ноября": "November",
-                    "декабря": "December",
-                }
-                for ru, en in ru_months.items():
-                    if ru in date_text:
-                        date_text = date_text.replace(ru, en)
-                        break
-
-                date_text = f'{date_text} {datetime.now().year}'
-                try:
-                    dt = datetime.strptime(date_text, "%d %B %H:%M:%S %Y")
-                except ValueError:
-                    dt = None
+            if date_text is not None:
+                now = datetime.now()
+                if "сегодня" in date_text:  # сегодня, ЧЧ:ММ:СС
+                    h, m, s = date_text.split(", ")[1].split(":")
+                    dt = datetime(now.year, now.month, now.day, int(h), int(m), int(s))
+                elif "вчера" in date_text:  # вчера, ЧЧ:ММ:СС
+                    h, m, s = date_text.split(", ")[1].split(":")
+                    temp = now - timedelta(days=1)
+                    dt = datetime(temp.year, temp.month, temp.day, int(h), int(m), int(s))
+                elif date_text.count(" ") == 2:  # ДД месяца, ЧЧ:ММ:СС
+                    split = date_text.split(", ")
+                    day, month = split[0].split()
+                    day, month = int(day), utils.MONTHS[month]
+                    h, m, s = split[1].split(":")
+                    dt = datetime(now.year, month, day, int(h), int(m), int(s))
+                else:  # ДД месяца ГГГГ, ЧЧ:ММ:СС
+                    split = date_text.split(", ")
+                    day, month, year = split[0].split()
+                    day, month, year = int(day), utils.MONTHS[month], int(year)
+                    h, m, s = split[1].split(":")
+                    dt = datetime(year, month, day, int(h), int(m), int(s))
 
             message_obj = types.Message(i["id"], message_text, chat_id, interlocutor_username,
                                         None, author_id, i["html"], image_link, determine_msg_type=False, date=dt)
